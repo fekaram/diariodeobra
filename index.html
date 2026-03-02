@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Diário de Obras - FKSA</title>
+
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #0b0c10; color: #e9eef5; }
+    header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,.08); position: sticky; top: 0; background: rgba(11,12,16,.92); backdrop-filter: blur(10px); z-index: 10; }
+    h1 { margin: 0 0 6px 0; font-size: 18px; }
+    .sub { margin: 0; opacity: .8; font-size: 13px; }
+
+    main { padding: 16px; max-width: 980px; margin: 0 auto; }
+
+    .card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 12px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+
+    label { display:block; font-size: 13px; opacity:.9; margin: 10px 0 6px; }
+    input[type="text"], input[type="date"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: #e9eef5;
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    textarea { min-height: 140px; resize: vertical; }
+
+    .row { display:flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1 1 220px; }
+
+    .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: #e9eef5;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    button.primary { background: #2d6cff; border-color: rgba(45,108,255,.6); }
+    button.danger { background: rgba(255,60,60,.18); border-color: rgba(255,60,60,.35); }
+
+    .hint { font-size: 12px; opacity: .8; line-height: 1.35; margin-top: 10px; }
+    .small { font-size: 12px; opacity: .85; }
+
+    .thumbGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .thumbWrap {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.2);
+      border-radius: 12px;
+      overflow: hidden;
+      display:flex;
+      flex-direction: column;
+    }
+    .thumbWrap img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display:block;
+    }
+    .thumbMeta {
+      padding: 8px;
+      font-size: 11px;
+      opacity: .9;
+      display:flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .thumbMeta button {
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-weight: 800;
+    }
+
+    .entriesHeader { display:flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .entriesHeader h2 { margin: 0; font-size: 16px; }
+    .pill { font-size: 12px; opacity: .85; border: 1px solid rgba(255,255,255,.14); padding: 4px 8px; border-radius: 999px; }
+
+    .list { display: grid; gap: 12px; margin-top: 12px; }
+    .dayItem { display:flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .dayLeft { display:flex; flex-direction: column; gap: 4px; }
+    .dayTitle { font-weight: 900; }
+    .daySub { font-size: 12px; opacity: .85; white-space: pre-wrap; }
+
+    footer { padding: 16px; opacity: .7; font-size: 12px; text-align: center; }
+
+    .headerBrand { font-weight: 900; letter-spacing: .2px; }
+  </style>
+
+  <!-- jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+  <header>
+    <div class="headerBrand">Diário de Obras FKSA - Arquitetura | Design</div>
+    <p class="sub">1 PDF por dia • múltiplas fotos com data/hora carimbadas</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="dia">Dia</label>
+          <input id="dia" type="date" />
+        </div>
+        <div>
+          <label for="obra">Obra / Projeto</label>
+          <input id="obra" type="text" placeholder="Ex: Reforma Apto 1203" />
+        </div>
+        <div>
+          <label for="responsavel">Responsável</label>
+          <input id="responsavel" type="text" placeholder="Ex: Felipe" />
+        </div>
+      </div>
+
+      <label for="fotos">Fotos do dia (pode selecionar várias)</label>
+      <input id="fotos" type="file" accept="image/*" capture="environment" multiple />
+
+      <div id="thumbs" class="thumbGrid" style="display:none;"></div>
+
+      <label for="texto">Diário / Relatório do dia</label>
+      <textarea id="texto" placeholder="O que foi feito hoje, equipes, materiais, ocorrências, pendências..."></textarea>
+
+      <div class="btns">
+        <button class="primary" id="btnSalvar">Salvar/Atualizar o dia</button>
+        <button id="btnExportarDia">Exportar PDF deste dia</button>
+        <button class="danger" id="btnApagarDia">Apagar este dia</button>
+        <button class="danger" id="btnApagarTudo">Apagar tudo</button>
+      </div>
+
+      <div class="hint">
+        Para virar “app” no iPhone: Safari → Compartilhar → <b>Adicionar à Tela de Início</b>.
+        <br/>No GitHub Pages (HTTPS) a câmera funciona melhor.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="entriesHeader">
+        <h2>Dias salvos</h2>
+        <div class="pill" id="countPill">0</div>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="hint">Tudo fica salvo no aparelho (IndexedDB). Para compartilhar, exporte o PDF do dia.</div>
+    </div>
+  </main>
+
+  <footer>FKSA • Diário de Obras (webapp)</footer>
+
+<script>
+(() => {
+  const HEADER_TEXT = "Diário de Obras FKSA - Arquitetura | Design";
+  const LOGO_PATH = "./logo-fksa.jpg"; // coloque este arquivo na mesma pasta do index.html
+
+  const $ = (id) => document.getElementById(id);
+  const diaEl = $("dia");
+  const obraEl = $("obra");
+  const respEl = $("responsavel");
+  const fotosEl = $("fotos");
+  const textoEl = $("texto");
+
+  const thumbsEl = $("thumbs");
+
+  const btnSalvar = $("btnSalvar");
+  const btnExportarDia = $("btnExportarDia");
+  const btnApagarDia = $("btnApagarDia");
+  const btnApagarTudo = $("btnApagarTudo");
+
+  const listEl = $("list");
+  const countPill = $("countPill");
+
+  // ---------- Data helpers ----------
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+
+  function formatDateBR(iso) {
+    const [y,m,dd] = iso.split("-");
+    return `${dd}/${m}/${y}`;
+  }
+
+  function formatDT(ts) {
+    const d = new Date(ts);
+    return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+
+  // ---------- IndexedDB ----------
+  const DB_NAME = "diario_obra_fksa_db";
+  const DB_VER = 1;
+  const STORE = "days"; // um registro por dia
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          const os = db.createObjectStore(STORE, { keyPath: "day" }); // day = YYYY-MM-DD
+          os.createIndex("by_day", "day");
+          os.createIndex("by_updatedAt", "updatedAt");
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function dbTx(mode, fn) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, mode);
+      const store = tx.objectStore(STORE);
+      const out = fn(store);
+      tx.oncomplete = () => resolve(out);
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function getDay(day) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      const req = store.get(day);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function putDay(record) {
+    return dbTx("readwrite", (store) => store.put(record));
+  }
+
+  async function deleteDay(day) {
+    return dbTx("readwrite", (store) => store.delete(day));
+  }
+
+  async function clearAll() {
+    return dbTx("readwrite", (store) => store.clear());
+  }
+
+  async function listDays() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const items = req.result || [];
+        items.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        resolve(items);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ---------- Image helpers ----------
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(file);
+    });
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  async function getImageProps(dataUrl) {
+    const img = await loadImage(dataUrl);
+    return { w: img.naturalWidth, h: img.naturalHeight };
+  }
+
+  async function stampDateTimeOnImage(file, ts) {
+    const dataUrl = await readFileAsDataURL(file);
+    const img = await loadImage(dataUrl);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    const text = formatDT(ts);
+    const margin = Math.max(16, Math.floor(canvas.width * 0.015));
+    const fontSize = Math.max(28, Math.floor(canvas.width * 0.03));
+    ctx.font = `800 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`;
+    ctx.textBaseline = "bottom";
+
+    const textWidth = ctx.measureText(text).width;
+    const boxH = Math.floor(fontSize * 1.25);
+    const boxW = Math.floor(textWidth + margin * 2);
+
+    const x = margin;
+    const y = canvas.height - margin;
+
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(x - margin, y - boxH, boxW, boxH + Math.floor(margin*0.15));
+
+    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.fillText(text, x, y);
+
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    const previewUrl = canvas.toDataURL("image/jpeg", 0.70);
+    return { blob, previewUrl };
+  }
+
+  // ---------- Logo FKSA (carrega 1x) ----------
+  let _logoDataUrl = null;
+  async function getLogoDataUrl() {
+    if (_logoDataUrl) return _logoDataUrl;
+
+    const res = await fetch(LOGO_PATH, { cache: "force-cache" });
+    if (!res.ok) throw new Error("Não achei o logo em " + LOGO_PATH);
+
+    const blob = await res.blob();
+    _logoDataUrl = await blobToDataURL(blob);
+    return _logoDataUrl;
+  }
+
+  // ---------- State (dia em edição) ----------
+  let currentPhotos = []; // { id, ts, blob, previewUrl }
+
+  function newLocalId() {
+    return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+  }
+
+  function renderThumbs() {
+    thumbsEl.innerHTML = "";
+    if (currentPhotos.length === 0) {
+      thumbsEl.style.display = "none";
+      return;
+    }
+    thumbsEl.style.display = "grid";
+
+    for (const p of currentPhotos.slice().sort((a,b) => a.ts - b.ts)) {
+      const wrap = document.createElement("div");
+      wrap.className = "thumbWrap";
+
+      const img = document.createElement("img");
+      img.src = p.previewUrl;
+      img.alt = "Foto carimbada";
+
+      const meta = document.createElement("div");
+      meta.className = "thumbMeta";
+
+      const t = document.createElement("div");
+      t.textContent = formatDT(p.ts);
+
+      const del = document.createElement("button");
+      del.className = "danger";
+      del.textContent = "Remover";
+      del.onclick = () => {
+        currentPhotos = currentPhotos.filter(x => x.id !== p.id);
+        renderThumbs();
+      };
+
+      meta.appendChild(t);
+      meta.appendChild(del);
+
+      wrap.appendChild(img);
+      wrap.appendChild(meta);
+      thumbsEl.appendChild(wrap);
+    }
+  }
+
+  async function loadDayIntoForm(dayIso) {
+    const rec = await getDay(dayIso);
+
+    if (!rec) {
+      textoEl.value = "";
+      currentPhotos = [];
+      renderThumbs();
+      return;
+    }
+
+    obraEl.value = rec.obra || "";
+    respEl.value = rec.responsavel || "";
+    textoEl.value = rec.text || "";
+
+    currentPhotos = [];
+    for (const ph of (rec.photos || [])) {
+      const previewUrl = await blobToDataURL(ph.blob);
+      currentPhotos.push({ id: ph.id, ts: ph.ts, blob: ph.blob, previewUrl });
+    }
+    renderThumbs();
+  }
+
+  // ---------- Events ----------
+  diaEl.value = todayISO();
+  loadDayIntoForm(diaEl.value).catch(console.error);
+
+  diaEl.addEventListener("change", () => {
+    loadDayIntoForm(diaEl.value).catch(console.error);
+  });
+
+  fotosEl.addEventListener("change", async () => {
+    const files = Array.from(fotosEl.files || []);
+    if (files.length === 0) return;
+
+    // Processa em sequência (mais estável no iPhone)
+    for (const f of files) {
+      const ts = Date.now();
+      try {
+        const { blob, previewUrl } = await stampDateTimeOnImage(f, ts);
+        currentPhotos.push({ id: newLocalId(), ts, blob, previewUrl });
+      } catch (e) {
+        console.error(e);
+        alert("Falha ao processar uma das fotos. Tente novamente.");
+      }
+    }
+
+    fotosEl.value = "";
+    renderThumbs();
+  });
+
+  btnSalvar.addEventListener("click", async () => {
+    const day = diaEl.value;
+    if (!day) { alert("Selecione o dia."); return; }
+
+    const record = {
+      day,
+      obra: obraEl.value.trim(),
+      responsavel: respEl.value.trim(),
+      text: textoEl.value.trim(),
+      updatedAt: Date.now(),
+      photos: currentPhotos
+        .slice()
+        .sort((a,b) => a.ts - b.ts)
+        .map(p => ({ id: p.id, ts: p.ts, blob: p.blob }))
+    };
+
+    await putDay(record);
+    await renderDaysList();
+    alert("Dia salvo/atualizado.");
+  });
+
+  btnApagarDia.addEventListener("click", async () => {
+    const day = diaEl.value;
+    if (!day) return;
+    if (!confirm(`Apagar o registro do dia ${formatDateBR(day)}?`)) return;
+
+    await deleteDay(day);
+    textoEl.value = "";
+    currentPhotos = [];
+    renderThumbs();
+
+    await renderDaysList();
+  });
+
+  btnApagarTudo.addEventListener("click", async () => {
+    if (!confirm("Tem certeza que deseja apagar TODOS os dias salvos neste aparelho?")) return;
+
+    await clearAll();
+    textoEl.value = "";
+    currentPhotos = [];
+    renderThumbs();
+
+    await renderDaysList();
+  });
+
+  btnExportarDia.addEventListener("click", async () => {
+    const day = diaEl.value;
+    if (!day) { alert("Selecione o dia."); return; }
+
+    const rec = await getDay(day);
+
+    // Se ainda não salvou, exporta do estado atual (form)
+    const toExport = rec || {
+      day,
+      obra: obraEl.value.trim(),
+      responsavel: respEl.value.trim(),
+      text: textoEl.value.trim(),
+      photos: currentPhotos
+        .slice()
+        .sort((a,b) => a.ts - b.ts)
+        .map(p => ({ id: p.id, ts: p.ts, blob: p.blob }))
+    };
+
+    if ((!toExport.text || toExport.text.trim() === "") && (!toExport.photos || toExport.photos.length === 0)) {
+      alert("Esse dia está vazio (sem texto e sem fotos).");
+      return;
+    }
+
+    await exportDayPDF(toExport);
+  });
+
+  // ---------- List rendering ----------
+  async function renderDaysList() {
+    const days = await listDays();
+    countPill.textContent = `${days.length} dia(s)`;
+
+    listEl.innerHTML = "";
+    if (days.length === 0) {
+      const div = document.createElement("div");
+      div.className = "hint";
+      div.textContent = "Nenhum dia salvo ainda. Selecione um dia, adicione fotos/texto e salve.";
+      listEl.appendChild(div);
+      return;
+    }
+
+    for (const d of days) {
+      const wrap = document.createElement("div");
+      wrap.className = "card dayItem";
+
+      const left = document.createElement("div");
+      left.className = "dayLeft";
+
+      const title = document.createElement("div");
+      title.className = "dayTitle";
+      title.textContent = formatDateBR(d.day);
+
+      const sub = document.createElement("div");
+      sub.className = "daySub";
+      const nPhotos = (d.photos || []).length;
+      const obra = d.obra ? `Obra: ${d.obra}` : "";
+      const resp = d.responsavel ? `Resp.: ${d.responsavel}` : "";
+      const line1 = [obra, resp].filter(Boolean).join(" • ");
+      const line2 = `${nPhotos} foto(s)`;
+      sub.textContent = [line1, line2].filter(Boolean).join("\n");
+
+      left.appendChild(title);
+      left.appendChild(sub);
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.gap = "10px";
+      right.style.flexWrap = "wrap";
+
+      const btnAbrir = document.createElement("button");
+      btnAbrir.textContent = "Abrir";
+      btnAbrir.onclick = async () => {
+        diaEl.value = d.day;
+        await loadDayIntoForm(d.day);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+
+      const btnPdf = document.createElement("button");
+      btnPdf.className = "primary";
+      btnPdf.textContent = "PDF";
+      btnPdf.onclick = async () => exportDayPDF(d);
+
+      right.appendChild(btnAbrir);
+      right.appendChild(btnPdf);
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      listEl.appendChild(wrap);
+    }
+  }
+
+  // ---------- PDF export (1 PDF por dia) ----------
+  async function exportDayPDF(dayRecord) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const pageW = 210, pageH = 297;
+    const margin = 12;
+    const contentW = pageW - margin*2;
+
+    // ===== Cabeçalho com LOGO + TEXTO =====
+    let headerY = 28; // onde começa a linha "Data: ..."
+    try {
+      const logo = await getLogoDataUrl();
+
+      // Ajuste de tamanho/posição do logo
+      const logoW = 42;     // mm
+      const logoH = 14;     // mm
+      const logoX = margin;
+      const logoY = 10;
+
+      doc.addImage(logo, "JPEG", logoX, logoY, logoW, logoH);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(HEADER_TEXT, logoX + logoW + 6, 16);
+
+      headerY = 30;
+    } catch (e) {
+      // fallback: sem logo
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text(HEADER_TEXT, margin, 16);
+      headerY = 26;
+    }
+
+    // Meta do dia
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Data: ${formatDateBR(dayRecord.day)}`, margin, headerY);
+
+    const obra = (dayRecord.obra || "").trim();
+    const resp = (dayRecord.responsavel || "").trim();
+
+    doc.setFontSize(10);
+    const metaLine = [
+      obra ? `Obra: ${obra}` : null,
+      resp ? `Responsável: ${resp}` : null
+    ].filter(Boolean).join("  |  ");
+    if (metaLine) doc.text(metaLine, margin, headerY + 6);
+
+    let y = metaLine ? (headerY + 12) : (headerY + 8);
+
+    // Texto do diário
+    const text = (dayRecord.text || "").trim();
+    if (text) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("Diário / Relatório:", margin, y);
+      y += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+
+      const wrapped = doc.splitTextToSize(text, contentW);
+      const lineH = 5.2;
+      const textHeight = wrapped.length * lineH;
+
+      if (y + textHeight > pageH - 20) {
+        doc.addPage();
+        y = 16;
+      }
+      doc.text(wrapped, margin, y);
+      y += textHeight + 8;
+    }
+
+    // Fotos
+    const photos = (dayRecord.photos || []).slice().sort((a,b) => a.ts - b.ts);
+    if (photos.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+
+      if (y > pageH - 30) { doc.addPage(); y = 16; }
+      doc.text("Fotos:", margin, y);
+      y += 6;
+
+      for (const ph of photos) {
+        const imgDataUrl = await blobToDataURL(ph.blob);
+        const imgProps = await getImageProps(imgDataUrl);
+        const ratio = imgProps.w / imgProps.h;
+
+        const maxImgH = 140;
+        let imgW = contentW;
+        let imgH = imgW / ratio;
+        if (imgH > maxImgH) {
+          imgH = maxImgH;
+          imgW = imgH * ratio;
+        }
+
+        // espaço: legenda + imagem + respiro
+        const blockH = 4 + imgH + 8;
+        if (y + blockH > pageH - 12) {
+          doc.addPage();
+          y = 16;
+        }
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text(formatDT(ph.ts), margin, y);
+        y += 4;
+
+        const imgX = margin + (contentW - imgW) / 2;
+        doc.addImage(imgDataUrl, "JPEG", imgX, y, imgW, imgH);
+        y += imgH + 8;
+      }
+    }
+
+    // Rodapé
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text("Gerado pelo Diário de Obras FKSA (webapp)", margin, pageH - 10);
+    doc.setTextColor(0);
+
+    const safeName = `${dayRecord.day}_diario_fksa`.replace(/[^\w\-]+/g, "_");
+    doc.save(`${safeName}.pdf`);
+  }
+
+  // init list
+  renderDaysList().catch(console.error);
+})();
+</script>
+</body>
+</html>
