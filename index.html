@@ -1,839 +1,231 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Diário de Obras - FKSA</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diário de Obras - FKSA</title>
 
-  <style>
-    :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
-    body { margin: 0; background: #0b0c10; color: #e9eef5; }
-    header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,.08); position: sticky; top: 0; background: rgba(11,12,16,.92); backdrop-filter: blur(10px); z-index: 10; }
-    .headerBrand { font-weight: 900; letter-spacing: .2px; }
-    .sub { margin: 6px 0 0 0; opacity: .8; font-size: 13px; }
+<style>
+:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+body { margin:0; background:#0b0c10; color:#e9eef5; }
+header { padding:16px; border-bottom:1px solid rgba(255,255,255,.08); background:#111; }
+.headerBrand { font-weight:900; }
+main { padding:16px; max-width:1000px; margin:auto; }
+.card { background:#16181d; padding:16px; border-radius:12px; margin-bottom:16px; }
+label { display:block; margin-top:10px; font-size:13px; }
+input, textarea { width:100%; padding:10px; border-radius:8px; border:none; margin-top:5px; background:#222; color:white; }
+textarea { min-height:120px; }
+button { margin-top:12px; padding:10px 14px; border-radius:8px; border:none; font-weight:bold; cursor:pointer; }
+.primary { background:#2d6cff; color:white; }
+.danger { background:#aa3333; color:white; }
+.thumbGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; margin-top:10px; }
+.thumbWrap img { width:100%; height:120px; object-fit:cover; border-radius:8px; }
+footer { text-align:center; font-size:12px; opacity:.6; padding:20px; }
+</style>
 
-    main { padding: 16px; max-width: 980px; margin: 0 auto; }
-
-    .card {
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      padding: 14px;
-      margin: 12px 0;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
-    }
-
-    label { display:block; font-size: 13px; opacity:.9; margin: 10px 0 6px; }
-    input[type="text"], input[type="date"], textarea {
-      width: 100%;
-      box-sizing: border-box;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      color: #e9eef5;
-      border-radius: 10px;
-      padding: 10px 12px;
-      outline: none;
-    }
-    textarea { min-height: 140px; resize: vertical; }
-
-    .row { display:flex; gap: 10px; flex-wrap: wrap; }
-    .row > * { flex: 1 1 220px; }
-
-    .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
-    button {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.08);
-      color: #e9eef5;
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    button:active { transform: translateY(1px); }
-    button.primary { background: #2d6cff; border-color: rgba(45,108,255,.6); }
-    button.danger { background: rgba(255,60,60,.18); border-color: rgba(255,60,60,.35); }
-
-    .hint { font-size: 12px; opacity: .8; line-height: 1.35; margin-top: 10px; }
-
-    .thumbGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .thumbWrap {
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.2);
-      border-radius: 12px;
-      overflow: hidden;
-      display:flex;
-      flex-direction: column;
-    }
-    .thumbWrap img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      display:block;
-    }
-    .thumbMeta {
-      padding: 8px;
-      font-size: 11px;
-      opacity: .9;
-      display:flex;
-      justify-content: space-between;
-      gap: 8px;
-      align-items: center;
-    }
-    .thumbMeta button {
-      padding: 6px 8px;
-      border-radius: 10px;
-      font-weight: 800;
-    }
-
-    .entriesHeader { display:flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-    .entriesHeader h2 { margin: 0; font-size: 16px; }
-    .pill { font-size: 12px; opacity: .85; border: 1px solid rgba(255,255,255,.14); padding: 4px 8px; border-radius: 999px; }
-
-    .list { display: grid; gap: 12px; margin-top: 12px; }
-    .dayItem { display:flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .dayLeft { display:flex; flex-direction: column; gap: 4px; }
-    .dayTitle { font-weight: 900; }
-    .daySub { font-size: 12px; opacity: .85; white-space: pre-wrap; }
-
-    footer { padding: 16px; opacity: .7; font-size: 12px; text-align: center; }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
-  <header>
-    <div class="headerBrand">Diário de Obras FKSA - Arquitetura | Design</div>
-    <p class="sub">1 PDF por dia • múltiplas fotos • carimbo data/hora • até 4 fotos por página</p>
-  </header>
 
-  <main>
-    <div class="card">
-      <div class="row">
-        <div>
-          <label for="dia">Dia</label>
-          <input id="dia" type="date" />
-        </div>
-        <div>
-          <label for="obra">Obra / Projeto</label>
-          <input id="obra" type="text" placeholder="Ex: Reforma Apto 1203" />
-        </div>
-        <div>
-          <label for="responsavel">Responsável</label>
-          <input id="responsavel" type="text" placeholder="Ex: Felipe" />
-        </div>
-      </div>
+<header>
+<div class="headerBrand">Diário de Obras FKSA - Arquitetura | Design</div>
+</header>
 
-      <label for="fotos">Fotos do dia (pode selecionar várias)</label>
-      <input id="fotos" type="file" accept="image/*" capture="environment" multiple />
+<main>
 
-      <div id="thumbs" class="thumbGrid" style="display:none;"></div>
+<div class="card">
+<label>Dia</label>
+<input id="dia" type="date">
 
-      <label for="texto">Diário / Relatório do dia</label>
-      <textarea id="texto" placeholder="O que foi feito hoje, equipes, materiais, ocorrências, pendências..."></textarea>
+<label>Obra / Projeto</label>
+<input id="obra" type="text">
 
-      <div class="btns">
-        <button class="primary" id="btnSalvar">Salvar/Atualizar o dia</button>
-        <button id="btnExportarDia">Exportar PDF deste dia</button>
-        <button class="danger" id="btnApagarDia">Apagar este dia</button>
-        <button class="danger" id="btnApagarTudo">Apagar tudo</button>
-      </div>
+<label>Responsável</label>
+<input id="responsavel" type="text">
 
-      <div class="hint">
-        Publique no GitHub Pages com <b>index.html</b> + <b>logo-fksa.jpg</b> na mesma pasta.
-        <br/>iPhone: Safari → Compartilhar → <b>Adicionar à Tela de Início</b>.
-      </div>
-    </div>
+<label>Fotos</label>
+<input id="fotos" type="file" accept="image/*" capture="environment" multiple>
 
-    <div class="card">
-      <div class="entriesHeader">
-        <h2>Dias salvos</h2>
-        <div class="pill" id="countPill">0</div>
-      </div>
-      <div class="list" id="list"></div>
-      <div class="hint">Tudo fica salvo no aparelho (IndexedDB). Para compartilhar, exporte o PDF do dia.</div>
-    </div>
-  </main>
+<div id="thumbs" class="thumbGrid"></div>
 
-  <footer>FKSA • Diário de Obras (webapp)</footer>
+<label>Diário / Relatório</label>
+<textarea id="texto"></textarea>
 
-  <!-- Logo escondido (muito mais confiável que fetch no Safari/GitHub Pages) -->
-  <img id="brandLogo" src="logo-fksa.jpg" alt="FKSA" style="display:none" />
+<button class="primary" id="btnSalvar">Salvar</button>
+<button id="btnExportar">Exportar PDF</button>
+</div>
+
+</main>
+
+<footer>FKSA • Diário de Obras</footer>
+
+<img id="brandLogo" src="logo-fksa.jpg" style="display:none" />
 
 <script>
-(() => {
-  // ===== Config =====
-  const HEADER_TEXT = "Diário de Obras FKSA - Arquitetura | Design";
+const { jsPDF } = window.jspdf;
 
-  // ===== DOM =====
-  const $ = (id) => document.getElementById(id);
-  const diaEl = $("dia");
-  const obraEl = $("obra");
-  const respEl = $("responsavel");
-  const fotosEl = $("fotos");
-  const textoEl = $("texto");
+const diaEl = document.getElementById("dia");
+const obraEl = document.getElementById("obra");
+const respEl = document.getElementById("responsavel");
+const fotosEl = document.getElementById("fotos");
+const textoEl = document.getElementById("texto");
+const thumbsEl = document.getElementById("thumbs");
 
-  const thumbsEl = $("thumbs");
+let fotos = [];
 
-  const btnSalvar = $("btnSalvar");
-  const btnExportarDia = $("btnExportarDia");
-  const btnApagarDia = $("btnApagarDia");
-  const btnApagarTudo = $("btnApagarTudo");
+function pad(n){ return String(n).padStart(2,"0"); }
+function formatDT(ts){
+  const d = new Date(ts);
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
 
-  const listEl = $("list");
-  const countPill = $("countPill");
+function safeFilePart(s){
+  return (s||"")
+  .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/[\/\\]+/g,"-")
+  .replace(/\s+/g,"_")
+  .replace(/[^\w\-]+/g,"")
+  .toLowerCase();
+}
 
-  // ===== Helpers gerais =====
-  function pad2(n) { return String(n).padStart(2, "0"); }
-
-  function todayISO() {
-    const d = new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-  }
-
-  function formatDateBR(iso) {
-    const [y,m,dd] = iso.split("-");
-    return `${dd}/${m}/${y}`;
-  }
-
-  function formatDT(ts) {
-    const d = new Date(ts);
-    return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  }
-
-  function safeFilePart(s) {
-    return (s || "")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .trim()
-      .replace(/\s+/g, "_")
-      .replace(/[\/\\]+/g, "-")
-      .replace(/[^\w\-.]+/g, "_")
-      .replace(/_+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 60);
-  }
-
-  function dataUrlImageFormat(dataUrl) {
-    if (dataUrl.startsWith("data:image/png")) return "PNG";
-    if (dataUrl.startsWith("data:image/webp")) return "WEBP";
-    return "JPEG";
-  }
-
-  function chunkArray(arr, size) {
-    const out = [];
-    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-    return out;
-  }
-
-  // ===== IndexedDB =====
-  const DB_NAME = "diario_obra_fksa_db";
-  const DB_VER = 1;
-  const STORE = "days";
-
-  function openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VER);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(STORE)) {
-          const os = db.createObjectStore(STORE, { keyPath: "day" });
-          os.createIndex("by_day", "day");
-          os.createIndex("by_updatedAt", "updatedAt");
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+fotosEl.addEventListener("change", async ()=>{
+  const files = Array.from(fotosEl.files);
+  for(const f of files){
+    const ts = Date.now();
+    const dataUrl = await new Promise(res=>{
+      const r = new FileReader();
+      r.onload = ()=>res(r.result);
+      r.readAsDataURL(f);
     });
+    fotos.push({blob:f, ts, preview:dataUrl});
   }
+  renderThumbs();
+});
 
-  async function dbTx(mode, fn) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, mode);
-      const store = tx.objectStore(STORE);
-      const out = fn(store);
-      tx.oncomplete = () => resolve(out);
-      tx.onerror = () => reject(tx.error);
-    });
-  }
+function renderThumbs(){
+  thumbsEl.innerHTML="";
+  fotos.forEach(f=>{
+    const img=document.createElement("img");
+    img.src=f.preview;
+    const div=document.createElement("div");
+    div.className="thumbWrap";
+    div.appendChild(img);
+    thumbsEl.appendChild(div);
+  });
+}
 
-  async function getDay(day) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, "readonly");
-      const store = tx.objectStore(STORE);
-      const req = store.get(day);
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
-    });
-  }
+async function getLogo(){
+  const img=document.getElementById("brandLogo");
+  await new Promise((res,rej)=>{
+    if(img.complete) return res();
+    img.onload=res;
+    img.onerror=rej;
+  });
+  const canvas=document.createElement("canvas");
+  canvas.width=img.naturalWidth;
+  canvas.height=img.naturalHeight;
+  canvas.getContext("2d").drawImage(img,0,0);
+  return canvas.toDataURL("image/jpeg",0.9);
+}
 
-  async function putDay(record) { return dbTx("readwrite", (store) => store.put(record)); }
-  async function deleteDay(day) { return dbTx("readwrite", (store) => store.delete(day)); }
-  async function clearAll() { return dbTx("readwrite", (store) => store.clear()); }
+async function exportPDF(){
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const pageW=210, pageH=297, margin=12;
+  const contentW=pageW-margin*2;
 
-  async function listDays() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, "readonly");
-      const store = tx.objectStore(STORE);
-      const req = store.getAll();
-      req.onsuccess = () => {
-        const items = req.result || [];
-        items.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-        resolve(items);
-      };
-      req.onerror = () => reject(req.error);
-    });
-  }
+  const logo=await getLogo();
 
-  // ===== Imagens =====
-  function readFileAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(fr.result);
-      fr.onerror = () => reject(fr.error);
-      fr.readAsDataURL(file);
-    });
-  }
-
-  function blobToDataURL(blob) {
-    return new Promise((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(fr.result);
-      fr.onerror = () => reject(fr.error);
-      fr.readAsDataURL(blob);
-    });
-  }
-
-  function loadImage(src) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
-    });
-  }
-
-  async function getImageProps(dataUrl) {
-    const img = await loadImage(dataUrl);
-    return { w: img.naturalWidth, h: img.naturalHeight };
-  }
-
-  async function stampDateTimeOnImage(file, ts) {
-    const dataUrl = await readFileAsDataURL(file);
-    const img = await loadImage(dataUrl);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    const text = formatDT(ts);
-    const margin = Math.max(16, Math.floor(canvas.width * 0.015));
-    const fontSize = Math.max(28, Math.floor(canvas.width * 0.03));
-    ctx.font = `800 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`;
-    ctx.textBaseline = "bottom";
-
-    const textWidth = ctx.measureText(text).width;
-    const boxH = Math.floor(fontSize * 1.25);
-    const boxW = Math.floor(textWidth + margin * 2);
-
-    const x = margin;
-    const y = canvas.height - margin;
-
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.fillRect(x - margin, y - boxH, boxW, boxH + Math.floor(margin*0.15));
-
-    ctx.fillStyle = "rgba(255,255,255,0.97)";
-    ctx.fillText(text, x, y);
-
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
-    const previewUrl = canvas.toDataURL("image/jpeg", 0.70);
-    return { blob, previewUrl };
-  }
-
-  // ===== Logo (cache) via <img> escondida =====
-  let _logoCached = null;
-  async function getLogoAsset() {
-    if (_logoCached) return _logoCached;
-
-    const img = document.getElementById("brandLogo");
-    if (!img) throw new Error("Elemento #brandLogo não encontrado.");
-
-    await new Promise((resolve, reject) => {
-      if (img.complete && img.naturalWidth > 0) return resolve();
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("Não consegui carregar logo-fksa.jpg (verifique se está no mesmo nível do index.html)."));
-    });
-
-    const maxW = 600; // px (reduz para ficar leve)
-    const scale = Math.min(1, maxW / img.naturalWidth);
-    const w = Math.max(1, Math.round(img.naturalWidth * scale));
-    const h = Math.max(1, Math.round(img.naturalHeight * scale));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0, w, h);
-
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-    _logoCached = { dataUrl, fmt: "JPEG" };
-    return _logoCached;
-  }
-
-  // ===== Estado do dia =====
-  let currentPhotos = []; // { id, ts, blob, previewUrl }
-
-  function newLocalId() {
-    return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
-  }
-
-  function renderThumbs() {
-    thumbsEl.innerHTML = "";
-    if (currentPhotos.length === 0) {
-      thumbsEl.style.display = "none";
-      return;
-    }
-    thumbsEl.style.display = "grid";
-
-    for (const p of currentPhotos.slice().sort((a,b) => a.ts - b.ts)) {
-      const wrap = document.createElement("div");
-      wrap.className = "thumbWrap";
-
-      const img = document.createElement("img");
-      img.src = p.previewUrl;
-      img.alt = "Foto carimbada";
-
-      const meta = document.createElement("div");
-      meta.className = "thumbMeta";
-
-      const t = document.createElement("div");
-      t.textContent = formatDT(p.ts);
-
-      const del = document.createElement("button");
-      del.className = "danger";
-      del.textContent = "Remover";
-      del.onclick = () => {
-        currentPhotos = currentPhotos.filter(x => x.id !== p.id);
-        renderThumbs();
-      };
-
-      meta.appendChild(t);
-      meta.appendChild(del);
-
-      wrap.appendChild(img);
-      wrap.appendChild(meta);
-      thumbsEl.appendChild(wrap);
-    }
-  }
-
-  async function loadDayIntoForm(dayIso) {
-    const rec = await getDay(dayIso);
-
-    if (!rec) {
-      textoEl.value = "";
-      currentPhotos = [];
-      renderThumbs();
-      return;
-    }
-
-    obraEl.value = rec.obra || "";
-    respEl.value = rec.responsavel || "";
-    textoEl.value = rec.text || "";
-
-    currentPhotos = [];
-    for (const ph of (rec.photos || [])) {
-      const previewUrl = await blobToDataURL(ph.blob);
-      currentPhotos.push({ id: ph.id, ts: ph.ts, blob: ph.blob, previewUrl });
-    }
-    renderThumbs();
-  }
-
-  // ===== PDF: Cabeçalho / Rodapé =====
-  function addHeader(doc, pageW, margin, logoAssetOrNull) {
-    const headerTop = 10;
-    const logoW = 42;
-    const logoH = 14;
-
-    // Texto (esquerda)
-    doc.setFont("helvetica", "bold");
+  function addHeader(){
+    doc.setFont("helvetica","bold");
     doc.setFontSize(14);
-    doc.text(HEADER_TEXT, margin, 16);
-
-    // Logo (direita)
-    if (logoAssetOrNull) {
-      const logoX = pageW - margin - logoW;
-      const logoY = headerTop;
-      doc.addImage(logoAssetOrNull.dataUrl, logoAssetOrNull.fmt, logoX, logoY, logoW, logoH);
-    }
-
-    // Linha separadora
-    doc.setDrawColor(180);
-    doc.setLineWidth(0.4);
-    doc.line(margin, 26, pageW - margin, 26);
+    doc.text("Diário de Obras FKSA - Arquitetura | Design",margin,16);
+    doc.addImage(logo,"JPEG",pageW-margin-40,8,40,14);
+    doc.setDrawColor(150);
+    doc.line(margin,26,pageW-margin,26);
   }
 
-  function addFooterPageNumber(doc, pageW, pageH, margin, pageIndex1, totalPages) {
-    doc.setFont("helvetica", "normal");
+  function addFooter(page,total){
     doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`pág. ${pageIndex1}/${totalPages}`, pageW - margin, pageH - 10, { align: "right" });
-    doc.setTextColor(0);
+    doc.text(`pág. ${page}/${total}`,pageW-margin,pageH-10,{align:"right"});
   }
 
-  // ===== PDF: desenhar grade 2x2 no espaço disponível (até 4 fotos) =====
-  async function drawPhotoGrid(doc, photosUpTo4, startY, pageW, pageH, margin) {
-    const contentW = pageW - margin * 2;
-    const cols = 2;
-    const rows = 2;
-    const gapX = 6;
-    const gapY = 10;
+  addHeader();
+  let y=34;
 
-    const cellW = (contentW - gapX) / cols;
+  doc.setFontSize(11);
+  doc.text(`Data: ${diaEl.value}`,margin,y);
+  y+=6;
+  doc.text(`Obra: ${obraEl.value}`,margin,y);
+  y+=6;
+  doc.text(`Responsável: ${respEl.value}`,margin,y);
+  y+=10;
 
-    const captionH = 5;
-    const availableH = pageH - margin - startY;
-    const cellH = (availableH - gapY) / rows;
+  doc.setFont("helvetica","bold");
+  doc.text("Diário / Relatório:",margin,y);
+  y+=6;
+  doc.setFont("helvetica","normal");
 
-    // Se ficou pequeno demais, não desenha aqui
-    // (aí o chamador joga para a próxima página)
-    const imgHMax = cellH - captionH;
-    if (imgHMax < 45) return false;
+  const lines=doc.splitTextToSize(textoEl.value,contentW);
+  lines.forEach(line=>{
+    if(y>pageH-20){ doc.addPage(); addHeader(); y=34; }
+    doc.text(line,margin,y);
+    y+=5;
+  });
 
-    for (let i = 0; i < photosUpTo4.length; i++) {
-      const r = Math.floor(i / cols);
-      const c = i % cols;
+  y+=8;
 
-      const x0 = margin + c * (cellW + gapX);
-      const y0 = startY + r * (cellH + gapY);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text(formatDT(photosUpTo4[i].ts), x0, y0 + 4);
-
-      const imgDataUrl = await blobToDataURL(photosUpTo4[i].blob);
-      const imgFmt = dataUrlImageFormat(imgDataUrl);
-      const imgProps = await getImageProps(imgDataUrl);
-      const ratio = imgProps.w / imgProps.h;
-
-      let imgW = cellW;
-      let imgH = imgW / ratio;
-      if (imgH > imgHMax) {
-        imgH = imgHMax;
-        imgW = imgH * ratio;
-      }
-
-      const imgX = x0 + (cellW - imgW) / 2;
-      const imgY = y0 + captionH;
-
-      doc.addImage(imgDataUrl, imgFmt, imgX, imgY, imgW, imgH);
-    }
-
-    return true;
+  // Fotos começam logo após texto
+  const photoChunks=[];
+  for(let i=0;i<fotos.length;i+=4){
+    photoChunks.push(fotos.slice(i,i+4));
   }
 
-  // ===== Export PDF (fotos começam logo após Diário/Relatório) =====
-  async function exportDayPDF(dayRecord) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-
-    const pageW = 210, pageH = 297;
-    const margin = 12;
-    const contentW = pageW - margin * 2;
-
-    // logo (se falhar, segue sem)
-    let logoAsset = null;
-    try { logoAsset = await getLogoAsset(); } catch (e) { console.warn(e); }
-
-    // Dados
-    const photos = (dayRecord.photos || []).slice().sort((a,b) => a.ts - b.ts);
-    const photoPages = chunkArray(photos, 4);
-
-    // --- Página 1: cabeçalho + meta + texto ---
-    addHeader(doc, pageW, margin, logoAsset);
-
-    let y = 34;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.text(`Data: ${formatDateBR(dayRecord.day)}`, margin, y);
-
-    const obra = (dayRecord.obra || "").trim();
-    const resp = (dayRecord.responsavel || "").trim();
-
-    doc.setFontSize(10);
-    const metaLine = [
-      obra ? `Obra: ${obra}` : null,
-      resp ? `Responsável: ${resp}` : null
-    ].filter(Boolean).join("  |  ");
-    if (metaLine) { y += 6; doc.text(metaLine, margin, y); }
-    y += 10;
-
-    const text = (dayRecord.text || "").trim();
-    if (text) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("Diário / Relatório:", margin, y);
-      y += 6;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-
-      const wrapped = doc.splitTextToSize(text, contentW);
-      const lineH = 5.2;
-
-      for (let i = 0; i < wrapped.length; i++) {
-        if (y + lineH > pageH - 18) {
-          doc.addPage();
-          addHeader(doc, pageW, margin, logoAsset);
-          y = 34;
-        }
-        doc.text(wrapped[i], margin, y);
-        y += lineH;
-      }
-      y += 8;
-    } else {
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(11);
-      doc.setTextColor(130);
-      doc.text("Sem texto neste dia.", margin, y);
-      doc.setTextColor(0);
-      y += 10;
+  for(let p=0;p<photoChunks.length;p++){
+    if(p>0 || y>pageH-120){
+      doc.addPage();
+      addHeader();
+      y=34;
     }
 
-    // --- Fotos começam logo após o Diário/Relatório ---
-    if (photos.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
+    doc.setFont("helvetica","bold");
+    doc.text("Fotos:",margin,y);
+    y+=6;
 
-      // Tenta desenhar a primeira grade na mesma página
-      doc.text("Fotos:", margin, y);
-      y += 6;
+    const cols=2, rows=2;
+    const gapX=6, gapY=8;
+    const cellW=(contentW-gapX)/2;
+    const cellH=60;
 
-      let usedFirstPage = false;
-      const firstChunk = photoPages[0];
+    photoChunks[p].forEach((photo,i)=>{
+      const col=i%2;
+      const row=Math.floor(i/2);
+      const x=margin+col*(cellW+gapX);
+      const yImg=y+row*(cellH+gapY);
 
-      // tenta desenhar 2x2 no espaço restante
-      usedFirstPage = await drawPhotoGrid(doc, firstChunk, y, pageW, pageH, margin);
+      doc.setFontSize(8);
+      doc.text(formatDT(photo.ts),x,yImg);
+      doc.addImage(photo.preview,"JPEG",x,yImg+4,cellW,cellH-10);
+    });
 
-      // se não couber, joga para a próxima página
-      let startPageIndex = 0;
-      if (!usedFirstPage) {
-        // apaga o "Fotos:" da tentativa? (não dá para apagar) -> solução simples:
-        // se não couber, a seção "Fotos:" fica na página 1 e as fotos vão na página 2.
-        doc.addPage();
-        addHeader(doc, pageW, margin, logoAsset);
-
-        let y2 = 34;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.text("Fotos:", margin, y2);
-        y2 += 6;
-
-        await drawPhotoGrid(doc, firstChunk, y2, pageW, pageH, margin);
-        startPageIndex = 1;
-      } else {
-        startPageIndex = 1; // já usamos o chunk 0 na página 1
-      }
-
-      // Páginas restantes (cada uma com 4 fotos)
-      for (let p = startPageIndex; p < photoPages.length; p++) {
-        doc.addPage();
-        addHeader(doc, pageW, margin, logoAsset);
-
-        let yp = 34;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(11);
-        doc.text("Fotos:", margin, yp);
-        yp += 6;
-
-        await drawPhotoGrid(doc, photoPages[p], yp, pageW, pageH, margin);
-      }
-    }
-
-    // Numeração de páginas
-    const totalPages = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      addFooterPageNumber(doc, pageW, pageH, margin, i, totalPages);
-    }
-
-    // Nome do arquivo
-    const obraPart = safeFilePart(obra || "obra");
-    doc.save(`${dayRecord.day}_diario_fksa_${obraPart}.pdf`);
+    y+=rows*(cellH+gapY);
   }
 
-  // ===== UI =====
-  diaEl.value = todayISO();
-  loadDayIntoForm(diaEl.value).catch(console.error);
-
-  diaEl.addEventListener("change", () => {
-    loadDayIntoForm(diaEl.value).catch(console.error);
-  });
-
-  fotosEl.addEventListener("change", async () => {
-    const files = Array.from(fotosEl.files || []);
-    if (files.length === 0) return;
-
-    for (const f of files) {
-      const ts = Date.now();
-      try {
-        const { blob, previewUrl } = await stampDateTimeOnImage(f, ts);
-        currentPhotos.push({ id: newLocalId(), ts, blob, previewUrl });
-      } catch (e) {
-        console.error(e);
-        alert("Falha ao processar uma das fotos. Tente novamente.");
-      }
-    }
-
-    fotosEl.value = "";
-    renderThumbs();
-  });
-
-  btnSalvar.addEventListener("click", async () => {
-    const day = diaEl.value;
-    if (!day) { alert("Selecione o dia."); return; }
-
-    const record = {
-      day,
-      obra: obraEl.value.trim(),
-      responsavel: respEl.value.trim(),
-      text: textoEl.value.trim(),
-      updatedAt: Date.now(),
-      photos: currentPhotos
-        .slice()
-        .sort((a,b) => a.ts - b.ts)
-        .map(p => ({ id: p.id, ts: p.ts, blob: p.blob }))
-    };
-
-    await putDay(record);
-    await renderDaysList();
-    alert("Dia salvo/atualizado.");
-  });
-
-  btnApagarDia.addEventListener("click", async () => {
-    const day = diaEl.value;
-    if (!day) return;
-    if (!confirm(`Apagar o registro do dia ${formatDateBR(day)}?`)) return;
-
-    await deleteDay(day);
-    textoEl.value = "";
-    currentPhotos = [];
-    renderThumbs();
-
-    await renderDaysList();
-  });
-
-  btnApagarTudo.addEventListener("click", async () => {
-    if (!confirm("Tem certeza que deseja apagar TODOS os dias salvos neste aparelho?")) return;
-
-    await clearAll();
-    textoEl.value = "";
-    currentPhotos = [];
-    renderThumbs();
-
-    await renderDaysList();
-  });
-
-  btnExportarDia.addEventListener("click", async () => {
-    const day = diaEl.value;
-    if (!day) { alert("Selecione o dia."); return; }
-
-    const rec = await getDay(day);
-    const toExport = rec || {
-      day,
-      obra: obraEl.value.trim(),
-      responsavel: respEl.value.trim(),
-      text: textoEl.value.trim(),
-      photos: currentPhotos
-        .slice()
-        .sort((a,b) => a.ts - b.ts)
-        .map(p => ({ id: p.id, ts: p.ts, blob: p.blob }))
-    };
-
-    if ((!toExport.text || toExport.text.trim() === "") && (!toExport.photos || toExport.photos.length === 0)) {
-      alert("Esse dia está vazio (sem texto e sem fotos).");
-      return;
-    }
-
-    await exportDayPDF(toExport);
-  });
-
-  async function renderDaysList() {
-    const days = await listDays();
-    countPill.textContent = `${days.length} dia(s)`;
-
-    listEl.innerHTML = "";
-    if (days.length === 0) {
-      const div = document.createElement("div");
-      div.className = "hint";
-      div.textContent = "Nenhum dia salvo ainda. Selecione um dia, adicione fotos/texto e salve.";
-      listEl.appendChild(div);
-      return;
-    }
-
-    for (const d of days) {
-      const wrap = document.createElement("div");
-      wrap.className = "card dayItem";
-
-      const left = document.createElement("div");
-      left.className = "dayLeft";
-
-      const title = document.createElement("div");
-      title.className = "dayTitle";
-      title.textContent = formatDateBR(d.day);
-
-      const sub = document.createElement("div");
-      sub.className = "daySub";
-      const nPhotos = (d.photos || []).length;
-      const obra = d.obra ? `Obra: ${d.obra}` : "";
-      const resp = d.responsavel ? `Resp.: ${d.responsavel}` : "";
-      const line1 = [obra, resp].filter(Boolean).join(" • ");
-      const line2 = `${nPhotos} foto(s)`;
-      sub.textContent = [line1, line2].filter(Boolean).join("\n");
-
-      left.appendChild(title);
-      left.appendChild(sub);
-
-      const right = document.createElement("div");
-      right.style.display = "flex";
-      right.style.gap = "10px";
-      right.style.flexWrap = "wrap";
-
-      const btnAbrir = document.createElement("button");
-      btnAbrir.textContent = "Abrir";
-      btnAbrir.onclick = async () => {
-        diaEl.value = d.day;
-        await loadDayIntoForm(d.day);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      };
-
-      const btnPdf = document.createElement("button");
-      btnPdf.className = "primary";
-      btnPdf.textContent = "PDF";
-      btnPdf.onclick = async () => exportDayPDF(d);
-
-      right.appendChild(btnAbrir);
-      right.appendChild(btnPdf);
-
-      wrap.appendChild(left);
-      wrap.appendChild(right);
-      listEl.appendChild(wrap);
-    }
+  const totalPages=doc.getNumberOfPages();
+  for(let i=1;i<=totalPages;i++){
+    doc.setPage(i);
+    addFooter(i,totalPages);
   }
 
-  // init
-  renderDaysList().catch(console.error);
+  const obraPart=safeFilePart(obraEl.value||"obra");
+  const fileName=`${diaEl.value}_diario_fksa_${obraPart}.pdf`;
+  doc.save(fileName);
+}
 
-})();
+document.getElementById("btnExportar").addEventListener("click",exportPDF);
+
+diaEl.value=new Date().toISOString().split("T")[0];
 </script>
+
 </body>
 </html>
