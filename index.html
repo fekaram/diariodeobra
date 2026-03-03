@@ -9,8 +9,8 @@
     :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
     body { margin: 0; background: #0b0c10; color: #e9eef5; }
     header { padding: 16px; border-bottom: 1px solid rgba(255,255,255,.08); position: sticky; top: 0; background: rgba(11,12,16,.92); backdrop-filter: blur(10px); z-index: 10; }
-    h1 { margin: 0 0 6px 0; font-size: 18px; }
-    .sub { margin: 0; opacity: .8; font-size: 13px; }
+    .headerBrand { font-weight: 900; letter-spacing: .2px; }
+    .sub { margin: 6px 0 0 0; opacity: .8; font-size: 13px; }
 
     main { padding: 16px; max-width: 980px; margin: 0 auto; }
 
@@ -55,7 +55,6 @@
     button.danger { background: rgba(255,60,60,.18); border-color: rgba(255,60,60,.35); }
 
     .hint { font-size: 12px; opacity: .8; line-height: 1.35; margin-top: 10px; }
-    .small { font-size: 12px; opacity: .85; }
 
     .thumbGrid {
       display: grid;
@@ -103,18 +102,15 @@
     .daySub { font-size: 12px; opacity: .85; white-space: pre-wrap; }
 
     footer { padding: 16px; opacity: .7; font-size: 12px; text-align: center; }
-
-    .headerBrand { font-weight: 900; letter-spacing: .2px; }
   </style>
 
-  <!-- jsPDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
   <header>
     <div class="headerBrand">Diário de Obras FKSA - Arquitetura | Design</div>
-    <p class="sub">1 PDF por dia • múltiplas fotos com data/hora carimbadas</p>
+    <p class="sub">1 PDF por dia • múltiplas fotos • carimbo data/hora • até 4 fotos por página</p>
   </header>
 
   <main>
@@ -150,8 +146,8 @@
       </div>
 
       <div class="hint">
-        Para virar “app” no iPhone: Safari → Compartilhar → <b>Adicionar à Tela de Início</b>.
-        <br/>No GitHub Pages (HTTPS) a câmera funciona melhor.
+        Publique no GitHub Pages com <b>index.html</b> + <b>logo-fksa.jpg</b> na mesma pasta.
+        <br/>iPhone: Safari → Compartilhar → <b>Adicionar à Tela de Início</b>.
       </div>
     </div>
 
@@ -167,11 +163,15 @@
 
   <footer>FKSA • Diário de Obras (webapp)</footer>
 
+  <!-- Logo escondido (muito mais confiável que fetch no Safari/GitHub Pages) -->
+  <img id="brandLogo" src="logo-fksa.jpg" alt="FKSA" style="display:none" />
+
 <script>
 (() => {
+  // ===== Config =====
   const HEADER_TEXT = "Diário de Obras FKSA - Arquitetura | Design";
-  const LOGO_PATH = "./logo-fksa.jpg"; // coloque este arquivo na mesma pasta do index.html
 
+  // ===== DOM =====
   const $ = (id) => document.getElementById(id);
   const diaEl = $("dia");
   const obraEl = $("obra");
@@ -189,7 +189,7 @@
   const listEl = $("list");
   const countPill = $("countPill");
 
-  // ---------- Data helpers ----------
+  // ===== Helpers gerais =====
   function pad2(n) { return String(n).padStart(2, "0"); }
 
   function todayISO() {
@@ -207,10 +207,34 @@
     return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
 
-  // ---------- IndexedDB ----------
+  function safeFilePart(s) {
+    return (s || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[\/\\]+/g, "-")
+      .replace(/[^\w\-.]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 60);
+  }
+
+  function dataUrlImageFormat(dataUrl) {
+    if (dataUrl.startsWith("data:image/png")) return "PNG";
+    if (dataUrl.startsWith("data:image/webp")) return "WEBP";
+    return "JPEG";
+  }
+
+  function chunkArray(arr, size) {
+    const out = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  }
+
+  // ===== IndexedDB =====
   const DB_NAME = "diario_obra_fksa_db";
   const DB_VER = 1;
-  const STORE = "days"; // um registro por dia
+  const STORE = "days";
 
   function openDB() {
     return new Promise((resolve, reject) => {
@@ -218,7 +242,7 @@
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains(STORE)) {
-          const os = db.createObjectStore(STORE, { keyPath: "day" }); // day = YYYY-MM-DD
+          const os = db.createObjectStore(STORE, { keyPath: "day" });
           os.createIndex("by_day", "day");
           os.createIndex("by_updatedAt", "updatedAt");
         }
@@ -250,17 +274,9 @@
     });
   }
 
-  async function putDay(record) {
-    return dbTx("readwrite", (store) => store.put(record));
-  }
-
-  async function deleteDay(day) {
-    return dbTx("readwrite", (store) => store.delete(day));
-  }
-
-  async function clearAll() {
-    return dbTx("readwrite", (store) => store.clear());
-  }
+  async function putDay(record) { return dbTx("readwrite", (store) => store.put(record)); }
+  async function deleteDay(day) { return dbTx("readwrite", (store) => store.delete(day)); }
+  async function clearAll() { return dbTx("readwrite", (store) => store.clear()); }
 
   async function listDays() {
     const db = await openDB();
@@ -277,7 +293,7 @@
     });
   }
 
-  // ---------- Image helpers ----------
+  // ===== Imagens =====
   function readFileAsDataURL(file) {
     return new Promise((resolve, reject) => {
       const fr = new FileReader();
@@ -344,20 +360,37 @@
     return { blob, previewUrl };
   }
 
-  // ---------- Logo FKSA (carrega 1x) ----------
-  let _logoDataUrl = null;
-  async function getLogoDataUrl() {
-    if (_logoDataUrl) return _logoDataUrl;
+  // ===== Logo (cache) via <img> escondida =====
+  let _logoCached = null;
+  async function getLogoAsset() {
+    if (_logoCached) return _logoCached;
 
-    const res = await fetch(LOGO_PATH, { cache: "force-cache" });
-    if (!res.ok) throw new Error("Não achei o logo em " + LOGO_PATH);
+    const img = document.getElementById("brandLogo");
+    if (!img) throw new Error("Elemento #brandLogo não encontrado.");
 
-    const blob = await res.blob();
-    _logoDataUrl = await blobToDataURL(blob);
-    return _logoDataUrl;
+    await new Promise((resolve, reject) => {
+      if (img.complete && img.naturalWidth > 0) return resolve();
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Não consegui carregar logo-fksa.jpg (verifique se está no mesmo nível do index.html)."));
+    });
+
+    const maxW = 600; // px (reduz para ficar leve)
+    const scale = Math.min(1, maxW / img.naturalWidth);
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    _logoCached = { dataUrl, fmt: "JPEG" };
+    return _logoCached;
   }
 
-  // ---------- State (dia em edição) ----------
+  // ===== Estado do dia =====
   let currentPhotos = []; // { id, ts, blob, previewUrl }
 
   function newLocalId() {
@@ -425,7 +458,220 @@
     renderThumbs();
   }
 
-  // ---------- Events ----------
+  // ===== PDF: Cabeçalho / Rodapé =====
+  function addHeader(doc, pageW, margin, logoAssetOrNull) {
+    const headerTop = 10;
+    const logoW = 42;
+    const logoH = 14;
+
+    // Texto (esquerda)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(HEADER_TEXT, margin, 16);
+
+    // Logo (direita)
+    if (logoAssetOrNull) {
+      const logoX = pageW - margin - logoW;
+      const logoY = headerTop;
+      doc.addImage(logoAssetOrNull.dataUrl, logoAssetOrNull.fmt, logoX, logoY, logoW, logoH);
+    }
+
+    // Linha separadora
+    doc.setDrawColor(180);
+    doc.setLineWidth(0.4);
+    doc.line(margin, 26, pageW - margin, 26);
+  }
+
+  function addFooterPageNumber(doc, pageW, pageH, margin, pageIndex1, totalPages) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`pág. ${pageIndex1}/${totalPages}`, pageW - margin, pageH - 10, { align: "right" });
+    doc.setTextColor(0);
+  }
+
+  // ===== PDF: desenhar grade 2x2 no espaço disponível (até 4 fotos) =====
+  async function drawPhotoGrid(doc, photosUpTo4, startY, pageW, pageH, margin) {
+    const contentW = pageW - margin * 2;
+    const cols = 2;
+    const rows = 2;
+    const gapX = 6;
+    const gapY = 10;
+
+    const cellW = (contentW - gapX) / cols;
+
+    const captionH = 5;
+    const availableH = pageH - margin - startY;
+    const cellH = (availableH - gapY) / rows;
+
+    // Se ficou pequeno demais, não desenha aqui
+    // (aí o chamador joga para a próxima página)
+    const imgHMax = cellH - captionH;
+    if (imgHMax < 45) return false;
+
+    for (let i = 0; i < photosUpTo4.length; i++) {
+      const r = Math.floor(i / cols);
+      const c = i % cols;
+
+      const x0 = margin + c * (cellW + gapX);
+      const y0 = startY + r * (cellH + gapY);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(formatDT(photosUpTo4[i].ts), x0, y0 + 4);
+
+      const imgDataUrl = await blobToDataURL(photosUpTo4[i].blob);
+      const imgFmt = dataUrlImageFormat(imgDataUrl);
+      const imgProps = await getImageProps(imgDataUrl);
+      const ratio = imgProps.w / imgProps.h;
+
+      let imgW = cellW;
+      let imgH = imgW / ratio;
+      if (imgH > imgHMax) {
+        imgH = imgHMax;
+        imgW = imgH * ratio;
+      }
+
+      const imgX = x0 + (cellW - imgW) / 2;
+      const imgY = y0 + captionH;
+
+      doc.addImage(imgDataUrl, imgFmt, imgX, imgY, imgW, imgH);
+    }
+
+    return true;
+  }
+
+  // ===== Export PDF (fotos começam logo após Diário/Relatório) =====
+  async function exportDayPDF(dayRecord) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const pageW = 210, pageH = 297;
+    const margin = 12;
+    const contentW = pageW - margin * 2;
+
+    // logo (se falhar, segue sem)
+    let logoAsset = null;
+    try { logoAsset = await getLogoAsset(); } catch (e) { console.warn(e); }
+
+    // Dados
+    const photos = (dayRecord.photos || []).slice().sort((a,b) => a.ts - b.ts);
+    const photoPages = chunkArray(photos, 4);
+
+    // --- Página 1: cabeçalho + meta + texto ---
+    addHeader(doc, pageW, margin, logoAsset);
+
+    let y = 34;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Data: ${formatDateBR(dayRecord.day)}`, margin, y);
+
+    const obra = (dayRecord.obra || "").trim();
+    const resp = (dayRecord.responsavel || "").trim();
+
+    doc.setFontSize(10);
+    const metaLine = [
+      obra ? `Obra: ${obra}` : null,
+      resp ? `Responsável: ${resp}` : null
+    ].filter(Boolean).join("  |  ");
+    if (metaLine) { y += 6; doc.text(metaLine, margin, y); }
+    y += 10;
+
+    const text = (dayRecord.text || "").trim();
+    if (text) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("Diário / Relatório:", margin, y);
+      y += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+
+      const wrapped = doc.splitTextToSize(text, contentW);
+      const lineH = 5.2;
+
+      for (let i = 0; i < wrapped.length; i++) {
+        if (y + lineH > pageH - 18) {
+          doc.addPage();
+          addHeader(doc, pageW, margin, logoAsset);
+          y = 34;
+        }
+        doc.text(wrapped[i], margin, y);
+        y += lineH;
+      }
+      y += 8;
+    } else {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(11);
+      doc.setTextColor(130);
+      doc.text("Sem texto neste dia.", margin, y);
+      doc.setTextColor(0);
+      y += 10;
+    }
+
+    // --- Fotos começam logo após o Diário/Relatório ---
+    if (photos.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+
+      // Tenta desenhar a primeira grade na mesma página
+      doc.text("Fotos:", margin, y);
+      y += 6;
+
+      let usedFirstPage = false;
+      const firstChunk = photoPages[0];
+
+      // tenta desenhar 2x2 no espaço restante
+      usedFirstPage = await drawPhotoGrid(doc, firstChunk, y, pageW, pageH, margin);
+
+      // se não couber, joga para a próxima página
+      let startPageIndex = 0;
+      if (!usedFirstPage) {
+        // apaga o "Fotos:" da tentativa? (não dá para apagar) -> solução simples:
+        // se não couber, a seção "Fotos:" fica na página 1 e as fotos vão na página 2.
+        doc.addPage();
+        addHeader(doc, pageW, margin, logoAsset);
+
+        let y2 = 34;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text("Fotos:", margin, y2);
+        y2 += 6;
+
+        await drawPhotoGrid(doc, firstChunk, y2, pageW, pageH, margin);
+        startPageIndex = 1;
+      } else {
+        startPageIndex = 1; // já usamos o chunk 0 na página 1
+      }
+
+      // Páginas restantes (cada uma com 4 fotos)
+      for (let p = startPageIndex; p < photoPages.length; p++) {
+        doc.addPage();
+        addHeader(doc, pageW, margin, logoAsset);
+
+        let yp = 34;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text("Fotos:", margin, yp);
+        yp += 6;
+
+        await drawPhotoGrid(doc, photoPages[p], yp, pageW, pageH, margin);
+      }
+    }
+
+    // Numeração de páginas
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooterPageNumber(doc, pageW, pageH, margin, i, totalPages);
+    }
+
+    // Nome do arquivo
+    const obraPart = safeFilePart(obra || "obra");
+    doc.save(`${dayRecord.day}_diario_fksa_${obraPart}.pdf`);
+  }
+
+  // ===== UI =====
   diaEl.value = todayISO();
   loadDayIntoForm(diaEl.value).catch(console.error);
 
@@ -437,7 +683,6 @@
     const files = Array.from(fotosEl.files || []);
     if (files.length === 0) return;
 
-    // Processa em sequência (mais estável no iPhone)
     for (const f of files) {
       const ts = Date.now();
       try {
@@ -503,8 +748,6 @@
     if (!day) { alert("Selecione o dia."); return; }
 
     const rec = await getDay(day);
-
-    // Se ainda não salvou, exporta do estado atual (form)
     const toExport = rec || {
       day,
       obra: obraEl.value.trim(),
@@ -524,7 +767,6 @@
     await exportDayPDF(toExport);
   });
 
-  // ---------- List rendering ----------
   async function renderDaysList() {
     const days = await listDays();
     countPill.textContent = `${days.length} dia(s)`;
@@ -588,134 +830,9 @@
     }
   }
 
-  // ---------- PDF export (1 PDF por dia) ----------
-  async function exportDayPDF(dayRecord) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-
-    const pageW = 210, pageH = 297;
-    const margin = 12;
-    const contentW = pageW - margin*2;
-
-    // ===== Cabeçalho com LOGO + TEXTO =====
-    let headerY = 28; // onde começa a linha "Data: ..."
-    try {
-      const logo = await getLogoDataUrl();
-
-      // Ajuste de tamanho/posição do logo
-      const logoW = 42;     // mm
-      const logoH = 14;     // mm
-      const logoX = margin;
-      const logoY = 10;
-
-      doc.addImage(logo, "JPEG", logoX, logoY, logoW, logoH);
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(HEADER_TEXT, logoX + logoW + 6, 16);
-
-      headerY = 30;
-    } catch (e) {
-      // fallback: sem logo
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(HEADER_TEXT, margin, 16);
-      headerY = 26;
-    }
-
-    // Meta do dia
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.text(`Data: ${formatDateBR(dayRecord.day)}`, margin, headerY);
-
-    const obra = (dayRecord.obra || "").trim();
-    const resp = (dayRecord.responsavel || "").trim();
-
-    doc.setFontSize(10);
-    const metaLine = [
-      obra ? `Obra: ${obra}` : null,
-      resp ? `Responsável: ${resp}` : null
-    ].filter(Boolean).join("  |  ");
-    if (metaLine) doc.text(metaLine, margin, headerY + 6);
-
-    let y = metaLine ? (headerY + 12) : (headerY + 8);
-
-    // Texto do diário
-    const text = (dayRecord.text || "").trim();
-    if (text) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("Diário / Relatório:", margin, y);
-      y += 6;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-
-      const wrapped = doc.splitTextToSize(text, contentW);
-      const lineH = 5.2;
-      const textHeight = wrapped.length * lineH;
-
-      if (y + textHeight > pageH - 20) {
-        doc.addPage();
-        y = 16;
-      }
-      doc.text(wrapped, margin, y);
-      y += textHeight + 8;
-    }
-
-    // Fotos
-    const photos = (dayRecord.photos || []).slice().sort((a,b) => a.ts - b.ts);
-    if (photos.length > 0) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-
-      if (y > pageH - 30) { doc.addPage(); y = 16; }
-      doc.text("Fotos:", margin, y);
-      y += 6;
-
-      for (const ph of photos) {
-        const imgDataUrl = await blobToDataURL(ph.blob);
-        const imgProps = await getImageProps(imgDataUrl);
-        const ratio = imgProps.w / imgProps.h;
-
-        const maxImgH = 140;
-        let imgW = contentW;
-        let imgH = imgW / ratio;
-        if (imgH > maxImgH) {
-          imgH = maxImgH;
-          imgW = imgH * ratio;
-        }
-
-        // espaço: legenda + imagem + respiro
-        const blockH = 4 + imgH + 8;
-        if (y + blockH > pageH - 12) {
-          doc.addPage();
-          y = 16;
-        }
-
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(10);
-        doc.text(formatDT(ph.ts), margin, y);
-        y += 4;
-
-        const imgX = margin + (contentW - imgW) / 2;
-        doc.addImage(imgDataUrl, "JPEG", imgX, y, imgW, imgH);
-        y += imgH + 8;
-      }
-    }
-
-    // Rodapé
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text("Gerado pelo Diário de Obras FKSA (webapp)", margin, pageH - 10);
-    doc.setTextColor(0);
-
-    const safeName = `${dayRecord.day}_diario_fksa`.replace(/[^\w\-]+/g, "_");
-    doc.save(`${safeName}.pdf`);
-  }
-
-  // init list
+  // init
   renderDaysList().catch(console.error);
+
 })();
 </script>
 </body>
