@@ -1,310 +1,871 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diário de Obras - FKSA</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Diário de Obras - FKSA</title>
 
-<style>
-:root{
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-}
-body{
-  margin:0;
-  background:#0f1115;
-  color:#eaeaea;
-}
-header{
-  padding:20px;
-  background:#14161c;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.headerBrand{
-  font-weight:800;
-  letter-spacing:.5px;
-  font-size:18px;
-}
-.subBrand{
-  font-size:12px;
-  opacity:.6;
-  margin-top:4px;
-}
-main{
-  max-width:1000px;
-  margin:auto;
-  padding:20px;
-}
-.card{
-  background:#1a1d24;
-  padding:20px;
-  border-radius:14px;
-  margin-bottom:20px;
-  box-shadow:0 15px 40px rgba(0,0,0,.4);
-}
-label{
-  font-size:13px;
-  margin-top:12px;
-  display:block;
-}
-input,textarea{
-  width:100%;
-  padding:10px;
-  border-radius:10px;
-  border:none;
-  margin-top:6px;
-  background:#262a33;
-  color:white;
-}
-textarea{ min-height:120px; }
-button{
-  margin-top:15px;
-  padding:10px 16px;
-  border-radius:10px;
-  border:none;
-  font-weight:600;
-  cursor:pointer;
-}
-.primary{ background:#2d6cff; color:white; }
-.secondary{ background:#333; color:white; }
+  <style>
+    :root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #0b0c10; color: #e9eef5; }
+    header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      position: sticky;
+      top: 0;
+      background: rgba(11,12,16,.92);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    .headerBrand { font-weight: 900; letter-spacing: .2px; }
+    .sub { margin: 6px 0 0 0; opacity: .8; font-size: 13px; }
 
-.thumbGrid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:10px;
-  margin-top:12px;
-}
-.thumbGrid img{
-  width:100%;
-  height:120px;
-  object-fit:cover;
-  border-radius:10px;
-}
+    main { padding: 16px; max-width: 980px; margin: 0 auto; }
 
-footer{
-  text-align:center;
-  padding:20px;
-  font-size:12px;
-  opacity:.5;
-}
-</style>
+    .card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 12px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
 
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    label { display:block; font-size: 13px; opacity:.9; margin: 10px 0 6px; }
+    input[type="text"], input[type="date"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: #e9eef5;
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    textarea { min-height: 140px; resize: vertical; }
+
+    .row { display:flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1 1 220px; }
+
+    .btns { display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; }
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      color: #e9eef5;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    button.primary { background: #2d6cff; border-color: rgba(45,108,255,.6); }
+    button.danger { background: rgba(255,60,60,.18); border-color: rgba(255,60,60,.35); }
+
+    .hint { font-size: 12px; opacity: .8; line-height: 1.35; margin-top: 10px; }
+
+    .thumbGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .thumbWrap {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.2);
+      border-radius: 12px;
+      overflow: hidden;
+      display:flex;
+      flex-direction: column;
+    }
+    .thumbWrap img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display:block;
+    }
+    .thumbMeta {
+      padding: 8px;
+      font-size: 11px;
+      opacity: .9;
+      display:flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .thumbMeta button {
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-weight: 900;
+    }
+
+    .entriesHeader { display:flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .entriesHeader h2 { margin: 0; font-size: 16px; }
+    .pill { font-size: 12px; opacity: .85; border: 1px solid rgba(255,255,255,.14); padding: 4px 8px; border-radius: 999px; }
+
+    .list { display: grid; gap: 12px; margin-top: 12px; }
+    .dayItem { display:flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .dayLeft { display:flex; flex-direction: column; gap: 4px; }
+    .dayTitle { font-weight: 900; }
+    .daySub { font-size: 12px; opacity: .85; white-space: pre-wrap; }
+
+    footer { padding: 16px; opacity: .7; font-size: 12px; text-align: center; }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
 
 <body>
+  <header>
+    <div class="headerBrand">Diário de Obras FKSA - Arquitetura | Design</div>
+    <p class="sub">1 PDF por dia • fotos com data/hora • até 4 fotos por página</p>
+  </header>
 
-<header>
-<div class="headerBrand">Diário de Obras FKSA</div>
-<div class="subBrand">Arquitetura | Design</div>
-</header>
+  <main>
+    <!-- FORM (simples de preencher) -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="dia">Dia</label>
+          <input id="dia" type="date" />
+        </div>
+        <div>
+          <label for="obra">Obra / Projeto</label>
+          <input id="obra" type="text" placeholder="Ex: Reforma Apto 1203" />
+        </div>
+        <div>
+          <label for="responsavel">Responsável</label>
+          <input id="responsavel" type="text" placeholder="Ex: Felipe" />
+        </div>
+      </div>
 
-<main>
+      <label for="fotos">Fotos do dia (pode selecionar várias)</label>
+      <input id="fotos" type="file" accept="image/*" capture="environment" multiple />
 
-<div class="card">
+      <div id="thumbs" class="thumbGrid" style="display:none;"></div>
 
-<label>Data</label>
-<input type="date" id="dia"/>
+      <label for="texto">Diário / Relatório do dia</label>
+      <textarea id="texto" placeholder="O que foi feito hoje, equipes, materiais, ocorrências, pendências..."></textarea>
 
-<label>Obra / Projeto</label>
-<input type="text" id="obra"/>
+      <div class="btns">
+        <button class="primary" id="btnSalvar">Salvar/Atualizar o dia</button>
+        <button id="btnExportarDia">Exportar PDF deste dia</button>
+        <button class="danger" id="btnApagarDia">Apagar este dia</button>
+        <button class="danger" id="btnApagarTudo">Apagar tudo</button>
+      </div>
 
-<label>Responsável</label>
-<input type="text" id="responsavel"/>
+      <div class="hint">
+        iPhone: Safari → Compartilhar → <b>Adicionar à Tela de Início</b>.<br/>
+        No GitHub Pages (HTTPS) a câmera funciona melhor.
+      </div>
+    </div>
 
-<label>Fotos</label>
-<input type="file" id="fotos" accept="image/*" capture="environment" multiple/>
-<div id="thumbs" class="thumbGrid"></div>
+    <!-- LISTA -->
+    <div class="card">
+      <div class="entriesHeader">
+        <h2>Dias salvos</h2>
+        <div class="pill" id="countPill">0 dia(s)</div>
+      </div>
+      <div class="list" id="list"></div>
+      <div class="hint">Tudo fica salvo no aparelho (IndexedDB). Para compartilhar, exporte o PDF do dia.</div>
+    </div>
+  </main>
 
-<label>Diário / Relatório</label>
-<textarea id="texto"></textarea>
+  <footer>FKSA • Diário de Obras (webapp)</footer>
 
-<button class="primary" id="exportar">Exportar PDF</button>
-
-</div>
-
-</main>
-
-<footer>FKSA ©</footer>
-
-<img id="brandLogo" src="logo-fksa.jpg" style="display:none"/>
+  <!-- Logo escondido (carrega de forma mais confiável no Safari/GitHub Pages) -->
+  <img id="brandLogo" src="logo-fksa.jpg" alt="FKSA" style="display:none" />
 
 <script>
-const { jsPDF } = window.jspdf;
+(() => {
+  const HEADER_TITLE = "Diário de Obras";
+  const HEADER_SUB = "FKSA - Arquitetura | Design";
 
-const diaEl = document.getElementById("dia");
-const obraEl = document.getElementById("obra");
-const respEl = document.getElementById("responsavel");
-const textoEl = document.getElementById("texto");
-const fotosEl = document.getElementById("fotos");
-const thumbsEl = document.getElementById("thumbs");
+  const $ = (id) => document.getElementById(id);
+  const diaEl = $("dia");
+  const obraEl = $("obra");
+  const respEl = $("responsavel");
+  const fotosEl = $("fotos");
+  const textoEl = $("texto");
+  const thumbsEl = $("thumbs");
+  const listEl = $("list");
+  const countPill = $("countPill");
 
-diaEl.value = new Date().toISOString().split("T")[0];
+  const btnSalvar = $("btnSalvar");
+  const btnExportarDia = $("btnExportarDia");
+  const btnApagarDia = $("btnApagarDia");
+  const btnApagarTudo = $("btnApagarTudo");
 
-let fotos = [];
+  // ---------- helpers de data ----------
+  function pad2(n) { return String(n).padStart(2, "0"); }
 
-function pad(n){ return String(n).padStart(2,"0"); }
-function formatDT(ts){
-  const d=new Date(ts);
-  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function safeFilePart(s){
-  return (s||"")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-    .replace(/[\/\\]+/g,"-")
-    .replace(/\s+/g,"_")
-    .replace(/[^\w\-]+/g,"")
-    .toLowerCase();
-}
-
-fotosEl.addEventListener("change", async ()=>{
-  const files=[...fotosEl.files];
-  for(const file of files){
-    const ts=Date.now();
-    const reader=new FileReader();
-    reader.onload=()=>{
-      fotos.push({preview:reader.result, ts});
-      renderThumbs();
-    };
-    reader.readAsDataURL(file);
-  }
-});
-
-function renderThumbs(){
-  thumbsEl.innerHTML="";
-  fotos.forEach(f=>{
-    const img=document.createElement("img");
-    img.src=f.preview;
-    thumbsEl.appendChild(img);
-  });
-}
-
-async function getLogo(){
-  const img=document.getElementById("brandLogo");
-  await new Promise(res=>{
-    if(img.complete) return res();
-    img.onload=res;
-  });
-
-  const canvas=document.createElement("canvas");
-  canvas.width=img.naturalWidth;
-  canvas.height=img.naturalHeight;
-  const ctx=canvas.getContext("2d");
-  ctx.imageSmoothingQuality="high";
-  ctx.drawImage(img,0,0);
-
-  return {
-    dataUrl:canvas.toDataURL("image/png"),
-    width:img.naturalWidth,
-    height:img.naturalHeight
-  };
-}
-
-function addHeader(doc,logo){
-  const margin=15;
-  const pageW=210;
-
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(18);
-  doc.text("Diário de Obras",margin,18);
-
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(11);
-  doc.text("FKSA Arquitetura | Design",margin,24);
-
-  const maxW=45,maxH=18;
-  const ratio=logo.width/logo.height;
-  let w=maxW,h=w/ratio;
-  if(h>maxH){ h=maxH; w=h*ratio; }
-
-  doc.addImage(logo.dataUrl,"PNG",pageW-margin-w,10,w,h);
-
-  doc.setDrawColor(180);
-  doc.line(margin,30,pageW-margin,30);
-}
-
-function addFooter(doc,page,total){
-  doc.setFontSize(9);
-  doc.setTextColor(130);
-  doc.text(`pág. ${page}/${total}`,200,287,{align:"right"});
-  doc.setTextColor(0);
-}
-
-document.getElementById("exportar").addEventListener("click", async ()=>{
-
-  const doc=new jsPDF({unit:"mm",format:"a4"});
-  const logo=await getLogo();
-
-  const pageW=210,pageH=297,margin=15;
-  let y=36;
-
-  addHeader(doc,logo);
-
-  doc.setFontSize(11);
-  doc.text(`Data: ${diaEl.value}`,margin,y); y+=6;
-  doc.text(`Obra: ${obraEl.value}`,margin,y); y+=6;
-  doc.text(`Responsável: ${respEl.value}`,margin,y); y+=10;
-
-  doc.setFont("helvetica","bold");
-  doc.text("Diário / Relatório",margin,y); y+=6;
-
-  doc.setFont("helvetica","normal");
-  const lines=doc.splitTextToSize(textoEl.value,pageW-margin*2);
-
-  lines.forEach(line=>{
-    if(y>pageH-20){
-      doc.addPage();
-      addHeader(doc,logo);
-      y=36;
-    }
-    doc.text(line,margin,y);
-    y+=5;
-  });
-
-  y+=8;
-
-  const chunks=[];
-  for(let i=0;i<fotos.length;i+=4){
-    chunks.push(fotos.slice(i,i+4));
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
   }
 
-  for(let p=0;p<chunks.length;p++){
-    if(y>pageH-120 || p>0){
-      doc.addPage();
-      addHeader(doc,logo);
-      y=36;
-    }
+  function formatDateBR(iso) {
+    const [y,m,dd] = iso.split("-");
+    return `${dd}/${m}/${y}`;
+  }
 
-    doc.setFont("helvetica","bold");
-    doc.text("Fotos",margin,y);
-    y+=8;
+  function formatDT(ts) {
+    const d = new Date(ts);
+    return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
 
-    const cellW=80;
-    const cellH=55;
-    const gap=10;
+  function safeFilePart(s) {
+    // Opção A: "obra/projeto" -> "obra-projeto"
+    return (s || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .replace(/\s+/g, "_")
+      .replace(/[\/\\]+/g, "-")
+      .replace(/[^\w\-.]+/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 60);
+  }
 
-    chunks[p].forEach((photo,i)=>{
-      const col=i%2;
-      const row=Math.floor(i/2);
-      const x=margin+col*(cellW+gap);
-      const yImg=y+row*(cellH+gap);
+  // ---------- IndexedDB ----------
+  const DB_NAME = "diario_obra_fksa_db";
+  const DB_VER = 1;
+  const STORE = "days"; // 1 registro por dia
 
-      doc.setFontSize(8);
-      doc.text(formatDT(photo.ts),x,yImg);
-      doc.addImage(photo.preview,"JPEG",x,yImg+4,cellW,cellH-10);
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          const os = db.createObjectStore(STORE, { keyPath: "day" });
+          os.createIndex("by_updatedAt", "updatedAt");
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
     });
   }
 
-  const total=doc.getNumberOfPages();
-  for(let i=1;i<=total;i++){
-    doc.setPage(i);
-    addFooter(doc,i,total);
+  async function dbTx(mode, fn) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, mode);
+      const store = tx.objectStore(STORE);
+      const out = fn(store);
+      tx.oncomplete = () => resolve(out);
+      tx.onerror = () => reject(tx.error);
+    });
   }
 
-  const obraPart=safeFilePart(obraEl.value||"obra");
-  doc.save(`${diaEl.value}_diario_fksa_${obraPart}.pdf`);
-});
-</script>
+  async function getDay(day) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      const req = store.get(day);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
 
+  async function putDay(record) {
+    return dbTx("readwrite", (store) => store.put(record));
+  }
+
+  async function deleteDay(day) {
+    return dbTx("readwrite", (store) => store.delete(day));
+  }
+
+  async function clearAll() {
+    return dbTx("readwrite", (store) => store.clear());
+  }
+
+  async function listDays() {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readonly");
+      const store = tx.objectStore(STORE);
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const items = req.result || [];
+        items.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        resolve(items);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  // ---------- imagens ----------
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(file);
+    });
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = () => reject(fr.error);
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  async function stampDateTimeOnImage(file, ts) {
+    const dataUrl = await readFileAsDataURL(file);
+    const img = await loadImage(dataUrl);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    // carimbo
+    const text = formatDT(ts);
+    const m = Math.max(16, Math.floor(canvas.width * 0.015));
+    const fontSize = Math.max(28, Math.floor(canvas.width * 0.03));
+
+    ctx.font = `800 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial`;
+    ctx.textBaseline = "bottom";
+
+    const textW = ctx.measureText(text).width;
+    const boxH = Math.floor(fontSize * 1.25);
+    const boxW = Math.floor(textW + m * 2);
+
+    const x = m;
+    const y = canvas.height - m;
+
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(x - m, y - boxH, boxW, boxH + Math.floor(m*0.15));
+    ctx.fillStyle = "rgba(255,255,255,0.97)";
+    ctx.fillText(text, x, y);
+
+    // blob final (alto) + preview (leve)
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+    const previewUrl = canvas.toDataURL("image/jpeg", 0.70);
+    return { blob, previewUrl };
+  }
+
+  // ---------- logo alta resolução proporcional ----------
+  let _logoCached = null;
+  async function getLogoAsset() {
+    if (_logoCached) return _logoCached;
+
+    const img = document.getElementById("brandLogo");
+    if (!img) throw new Error("Elemento #brandLogo não encontrado.");
+
+    await new Promise((resolve, reject) => {
+      if (img.complete && img.naturalWidth > 0) return resolve();
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Não consegui carregar logo-fksa.jpg (verifique se está na mesma pasta do index.html)."));
+    });
+
+    // usa resolução real, mas exporta como PNG (nítido no PDF)
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0);
+
+    _logoCached = {
+      dataUrl: canvas.toDataURL("image/png"),
+      w: img.naturalWidth,
+      h: img.naturalHeight
+    };
+    return _logoCached;
+  }
+
+  // ---------- estado ----------
+  let currentPhotos = []; // { id, ts, blob, previewUrl }
+
+  function newLocalId() {
+    return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+  }
+
+  function renderThumbs() {
+    thumbsEl.innerHTML = "";
+    if (currentPhotos.length === 0) {
+      thumbsEl.style.display = "none";
+      return;
+    }
+    thumbsEl.style.display = "grid";
+
+    for (const p of currentPhotos.slice().sort((a,b) => a.ts - b.ts)) {
+      const wrap = document.createElement("div");
+      wrap.className = "thumbWrap";
+
+      const img = document.createElement("img");
+      img.src = p.previewUrl;
+      img.alt = "Foto carimbada";
+
+      const meta = document.createElement("div");
+      meta.className = "thumbMeta";
+
+      const t = document.createElement("div");
+      t.textContent = formatDT(p.ts);
+
+      const del = document.createElement("button");
+      del.className = "danger";
+      del.textContent = "Remover";
+      del.onclick = () => {
+        currentPhotos = currentPhotos.filter(x => x.id !== p.id);
+        renderThumbs();
+      };
+
+      meta.appendChild(t);
+      meta.appendChild(del);
+      wrap.appendChild(img);
+      wrap.appendChild(meta);
+      thumbsEl.appendChild(wrap);
+    }
+  }
+
+  async function loadDayIntoForm(dayIso) {
+    const rec = await getDay(dayIso);
+
+    if (!rec) {
+      // dia novo
+      // (mantém obra/responsável do que já está digitado, se você preferir)
+      textoEl.value = "";
+      currentPhotos = [];
+      renderThumbs();
+      return;
+    }
+
+    obraEl.value = rec.obra || "";
+    respEl.value = rec.responsavel || "";
+    textoEl.value = rec.text || "";
+
+    currentPhotos = [];
+    for (const ph of (rec.photos || [])) {
+      const previewUrl = await blobToDataURL(ph.blob);
+      currentPhotos.push({ id: ph.id, ts: ph.ts, blob: ph.blob, previewUrl });
+    }
+    renderThumbs();
+  }
+
+  // ---------- PDF helpers ----------
+  function chunkArray(arr, size) {
+    const out = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  }
+
+  function addHeader(doc, pageW, margin, logoAssetOrNull) {
+    // layout “escritório grande”
+    // título com peso tipográfico ajustado + subtítulo leve
+    const top = 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(17);
+    doc.text(HEADER_TITLE, margin, 17);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10.5);
+    doc.setTextColor(90);
+    doc.text(HEADER_SUB, margin, 23);
+    doc.setTextColor(0);
+
+    // logo proporcional à direita
+    if (logoAssetOrNull) {
+      const maxWmm = 46;
+      const maxHmm = 18;
+      const ratio = logoAssetOrNull.w / logoAssetOrNull.h;
+
+      let w = maxWmm;
+      let h = w / ratio;
+      if (h > maxHmm) {
+        h = maxHmm;
+        w = h * ratio;
+      }
+
+      const x = pageW - margin - w;
+      const y = top;
+      doc.addImage(logoAssetOrNull.dataUrl, "PNG", x, y, w, h);
+    }
+
+    // linha separadora
+    doc.setDrawColor(170);
+    doc.setLineWidth(0.35);
+    doc.line(margin, 28, pageW - margin, 28);
+  }
+
+  function addFooterPageNumber(doc, pageW, pageH, margin, pageIndex1, totalPages) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`pág. ${pageIndex1}/${totalPages}`, pageW - margin, pageH - 10, { align: "right" });
+    doc.setTextColor(0);
+  }
+
+  // desenha até 4 fotos (2x2) mantendo proporção, sem distorcer
+  async function drawPhotoGrid(doc, photosUpTo4, startY, pageW, pageH, margin) {
+    const contentW = pageW - margin * 2;
+
+    const cols = 2;
+    const rows = 2;
+    const gapX = 8;
+    const gapY = 12;
+
+    const cellW = (contentW - gapX) / cols;
+    const availableH = pageH - margin - startY;
+    const cellH = (availableH - gapY) / rows;
+
+    const captionH = 6;
+
+    // se a célula ficou pequena demais, não desenha aqui
+    if (cellH < 55) return false;
+
+    for (let i = 0; i < photosUpTo4.length; i++) {
+      const photo = photosUpTo4[i];
+
+      const r = Math.floor(i / cols);
+      const c = i % cols;
+
+      const cellX = margin + c * (cellW + gapX);
+      const cellY = startY + r * (cellH + gapY);
+
+      // legenda (timestamp)
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(80);
+      doc.text(formatDT(photo.ts), cellX, cellY + 4);
+      doc.setTextColor(0);
+
+      // imagem (usa o blob carimbado, mantendo qualidade)
+      const imgDataUrl = await blobToDataURL(photo.blob);
+      const imgObj = await loadImage(imgDataUrl);
+      const ratio = imgObj.naturalWidth / imgObj.naturalHeight;
+
+      const maxImgW = cellW;
+      const maxImgH = cellH - captionH;
+
+      let drawW = maxImgW;
+      let drawH = drawW / ratio;
+      if (drawH > maxImgH) {
+        drawH = maxImgH;
+        drawW = drawH * ratio;
+      }
+
+      const drawX = cellX + (cellW - drawW) / 2;
+      const drawY = cellY + captionH + (maxImgH - drawH) / 2;
+
+      doc.addImage(imgDataUrl, "JPEG", drawX, drawY, drawW, drawH);
+    }
+
+    return true;
+  }
+
+  // ---------- export PDF ----------
+  async function exportDayPDF(dayRecord) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    const pageW = 210, pageH = 297;
+    const margin = 14;
+    const contentW = pageW - margin * 2;
+
+    // logo (se falhar, segue sem)
+    let logoAsset = null;
+    try { logoAsset = await getLogoAsset(); } catch (e) { console.warn(e); }
+
+    // dados
+    const photos = (dayRecord.photos || []).slice().sort((a,b) => a.ts - b.ts);
+    const photoPages = chunkArray(photos, 4);
+
+    // --- Página 1: header + meta + texto ---
+    addHeader(doc, pageW, margin, logoAsset);
+
+    let y = 36; // abaixo da linha
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Data: ${formatDateBR(dayRecord.day)}`, margin, y);
+
+    const obra = (dayRecord.obra || "").trim();
+    const resp = (dayRecord.responsavel || "").trim();
+
+    doc.setFontSize(10.5);
+    const metaLine = [
+      obra ? `Obra: ${obra}` : null,
+      resp ? `Responsável: ${resp}` : null
+    ].filter(Boolean).join("  |  ");
+    if (metaLine) {
+      y += 6;
+      doc.text(metaLine, margin, y);
+    }
+    y += 10;
+
+    const text = (dayRecord.text || "").trim();
+    if (text) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11.5);
+      doc.text("Diário / Relatório", margin, y);
+      y += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+
+      const wrapped = doc.splitTextToSize(text, contentW);
+      const lineH = 5.2;
+
+      for (let i = 0; i < wrapped.length; i++) {
+        if (y + lineH > pageH - 18) {
+          doc.addPage();
+          addHeader(doc, pageW, margin, logoAsset);
+          y = 36;
+        }
+        doc.text(wrapped[i], margin, y);
+        y += lineH;
+      }
+      y += 8;
+    } else {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(11);
+      doc.setTextColor(130);
+      doc.text("Sem texto neste dia.", margin, y);
+      doc.setTextColor(0);
+      y += 10;
+    }
+
+    // --- Fotos: começam logo após o texto (se couber) ---
+    if (photos.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11.5);
+      doc.text("Fotos", margin, y);
+      y += 6;
+
+      let usedFirstPage = false;
+      const firstChunk = photoPages[0];
+
+      usedFirstPage = await drawPhotoGrid(doc, firstChunk, y, pageW, pageH, margin);
+
+      // se não couber na página 1, vai para a próxima
+      let startIdx = 0;
+      if (usedFirstPage) {
+        startIdx = 1; // já desenhou o chunk 0
+      } else {
+        doc.addPage();
+        addHeader(doc, pageW, margin, logoAsset);
+        let y2 = 36;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11.5);
+        doc.text("Fotos", margin, y2);
+        y2 += 6;
+
+        await drawPhotoGrid(doc, firstChunk, y2, pageW, pageH, margin);
+        startIdx = 1;
+      }
+
+      // páginas restantes (cada uma até 4 fotos)
+      for (let p = startIdx; p < photoPages.length; p++) {
+        doc.addPage();
+        addHeader(doc, pageW, margin, logoAsset);
+
+        let yp = 36;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11.5);
+        doc.text("Fotos", margin, yp);
+        yp += 6;
+
+        await drawPhotoGrid(doc, photoPages[p], yp, pageW, pageH, margin);
+      }
+    }
+
+    // numeração
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooterPageNumber(doc, pageW, pageH, margin, i, totalPages);
+    }
+
+    // nome do arquivo (Opção A: "/" vira "-")
+    const obraPart = safeFilePart(obra || "obra");
+    doc.save(`${dayRecord.day}_diario_fksa_${obraPart}.pdf`);
+  }
+
+  // ---------- eventos UI ----------
+  diaEl.value = todayISO();
+  loadDayIntoForm(diaEl.value).catch(console.error);
+
+  diaEl.addEventListener("change", () => {
+    loadDayIntoForm(diaEl.value).catch(console.error);
+  });
+
+  fotosEl.addEventListener("change", async () => {
+    const files = Array.from(fotosEl.files || []);
+    if (files.length === 0) return;
+
+    // processa em sequência (mais estável no iPhone)
+    for (const f of files) {
+      const ts = Date.now();
+      try {
+        const { blob, previewUrl } = await stampDateTimeOnImage(f, ts);
+        currentPhotos.push({ id: newLocalId(), ts, blob, previewUrl });
+      } catch (e) {
+        console.error(e);
+        alert("Falha ao processar uma das fotos. Tente novamente.");
+      }
+    }
+
+    fotosEl.value = "";
+    renderThumbs();
+  });
+
+  btnSalvar.addEventListener("click", async () => {
+    const day = diaEl.value;
+    if (!day) { alert("Selecione o dia."); return; }
+
+    const record = {
+      day,
+      obra: obraEl.value.trim(),
+      responsavel: respEl.value.trim(),
+      text: textoEl.value.trim(),
+      updatedAt: Date.now(),
+      photos: currentPhotos
+        .slice()
+        .sort((a,b) => a.ts - b.ts)
+        .map(p => ({ id: p.id, ts: p.ts, blob: p.blob }))
+    };
+
+    await putDay(record);
+    await renderDaysList();
+    alert("Dia salvo/atualizado.");
+  });
+
+  btnApagarDia.addEventListener("click", async () => {
+    const day = diaEl.value;
+    if (!day) return;
+    if (!confirm(`Apagar o registro do dia ${formatDateBR(day)}?`)) return;
+
+    await deleteDay(day);
+    textoEl.value = "";
+    currentPhotos = [];
+    renderThumbs();
+
+    await renderDaysList();
+  });
+
+  btnApagarTudo.addEventListener("click", async () => {
+    if (!confirm("Tem certeza que deseja apagar TODOS os dias salvos neste aparelho?")) return;
+
+    await clearAll();
+    textoEl.value = "";
+    currentPhotos = [];
+    renderThumbs();
+
+    await renderDaysList();
+  });
+
+  btnExportarDia.addEventListener("click", async () => {
+    const day = diaEl.value;
+    if (!day) { alert("Selecione o dia."); return; }
+
+    const rec = await getDay(day);
+
+    // se não salvou, exporta o estado atual
+    const toExport = rec || {
+      day,
+      obra: obraEl.value.trim(),
+      responsavel: respEl.value.trim(),
+      text: textoEl.value.trim(),
+      photos: currentPhotos
+        .slice()
+        .sort((a,b) => a.ts - b.ts)
+        .map(p => ({ id: p.id, ts: p.ts, blob: p.blob }))
+    };
+
+    if ((!toExport.text || toExport.text.trim() === "") && (!toExport.photos || toExport.photos.length === 0)) {
+      alert("Esse dia está vazio (sem texto e sem fotos).");
+      return;
+    }
+
+    await exportDayPDF(toExport);
+  });
+
+  // ---------- lista ----------
+  async function renderDaysList() {
+    const days = await listDays();
+    countPill.textContent = `${days.length} dia(s)`;
+
+    listEl.innerHTML = "";
+    if (days.length === 0) {
+      const div = document.createElement("div");
+      div.className = "hint";
+      div.textContent = "Nenhum dia salvo ainda. Selecione um dia, adicione fotos/texto e salve.";
+      listEl.appendChild(div);
+      return;
+    }
+
+    for (const d of days) {
+      const wrap = document.createElement("div");
+      wrap.className = "card dayItem";
+
+      const left = document.createElement("div");
+      left.className = "dayLeft";
+
+      const title = document.createElement("div");
+      title.className = "dayTitle";
+      title.textContent = formatDateBR(d.day);
+
+      const sub = document.createElement("div");
+      sub.className = "daySub";
+      const nPhotos = (d.photos || []).length;
+      const obra = d.obra ? `Obra: ${d.obra}` : "";
+      const resp = d.responsavel ? `Resp.: ${d.responsavel}` : "";
+      const line1 = [obra, resp].filter(Boolean).join(" • ");
+      const line2 = `${nPhotos} foto(s)`;
+      sub.textContent = [line1, line2].filter(Boolean).join("\n");
+
+      left.appendChild(title);
+      left.appendChild(sub);
+
+      const right = document.createElement("div");
+      right.style.display = "flex";
+      right.style.gap = "10px";
+      right.style.flexWrap = "wrap";
+
+      const btnAbrir = document.createElement("button");
+      btnAbrir.textContent = "Abrir";
+      btnAbrir.onclick = async () => {
+        diaEl.value = d.day;
+        await loadDayIntoForm(d.day);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+
+      const btnPdf = document.createElement("button");
+      btnPdf.className = "primary";
+      btnPdf.textContent = "PDF";
+      btnPdf.onclick = async () => exportDayPDF(d);
+
+      right.appendChild(btnAbrir);
+      right.appendChild(btnPdf);
+
+      wrap.appendChild(left);
+      wrap.appendChild(right);
+      listEl.appendChild(wrap);
+    }
+  }
+
+  // init
+  renderDaysList().catch(console.error);
+})();
+</script>
 </body>
 </html>
